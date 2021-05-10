@@ -29,7 +29,7 @@ namespace InfoWriterWebSocketServer.Server
             _timeoutSec = timeInSecFloat;
         }
 
-        public virtual void OnMessage(Update u)
+        public virtual void OnMessage(TcpClient client, Update u)
         {
             Console.WriteLine(u.Payload);
         }
@@ -85,7 +85,7 @@ namespace InfoWriterWebSocketServer.Server
                     }
                     if(update.Frame == FrameMessageEnum.Text)
                     {
-                        OnMessage(update);
+                        OnMessage(client ,update);
                     }
                     lastMessageTimeSec = DateTimeOffset.Now.ToUnixTimeSeconds();
                 }
@@ -97,6 +97,10 @@ namespace InfoWriterWebSocketServer.Server
         {
             var stream = client.GetStream();
             stream.Write(ResponseFactory.Ping());
+        }
+        public void Disconnect(TcpClient client)
+        {
+
         }
 
     }

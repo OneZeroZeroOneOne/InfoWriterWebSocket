@@ -25,13 +25,13 @@ namespace InfoWriterWebSocketServer.Utils
         public string GetText()
         {
             byte[] b = new byte[1024];
-            _bytes.Skip(_index-1).ToArray().CopyTo(b, 0);
+            _bytes.Skip(_index).ToArray().CopyTo(b, 0);
             return Encoding.UTF8.GetString(b);
         }
 
         public string GetText(byte[] mask)
         {
-            var enc = _bytes.Skip(_index - 1).ToArray();
+            var enc = _bytes.Skip(_index).ToArray();
             byte[] b = new byte[enc.Length];
             for (int i = 0; i < enc.Length; i++)
             {
@@ -43,6 +43,16 @@ namespace InfoWriterWebSocketServer.Utils
         public byte GetByte()
         {
             return _bytes[_index++];
+        }
+
+        public byte[] Get8Bytes()
+        {
+            var b = new byte[8];
+            for(int i = 0; i<8; i++)
+            {
+                b[i] = _bytes[_index++];
+            }
+            return b;
         }
 
     }

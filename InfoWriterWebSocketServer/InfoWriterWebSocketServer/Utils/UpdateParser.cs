@@ -29,15 +29,25 @@ namespace InfoWriterWebSocketServer.Utils
             u.IsFullUpdate = hb[7];
             var maskBits = byteReader.GetBits();
             var payloadLenghtBitArr = new bool[] { maskBits[0], maskBits[1], maskBits[2], maskBits[3], maskBits[4], maskBits[5], maskBits[6], false};
-            var mba = new BitArray(payloadLenghtBitArr);
-            byte[] nmba = new byte[1];
-            mba.CopyTo(nmba, 0);
-            u.PayloadLenght = Convert.ToInt32(nmba[0]);
+            var pba = new BitArray(payloadLenghtBitArr);
+            byte[] npba = new byte[1];
+            pba.CopyTo(npba, 0);
+            if(Convert.ToInt32(npba[0]) < 125)
+            {
+                u.PayloadLength = Convert.ToInt32(npba[0]);
+            }
+            else if (Convert.ToInt32(npba[0]) == 126)
+            {
+                u.PayloadLength = Convert.ToInt32(new byte[2] { byteReader.GetByte(), byteReader.GetByte() });
+            }
+            else if (Convert.ToInt32(npba[0]) == 127)
+            {
+                u.PayloadLength = Convert.ToInt32(byteReader.Get8Bytes());
+            }
             if (maskBits[7])
             {
                 u.Mask = new byte[4] { byteReader.GetByte(), byteReader.GetByte(), byteReader.GetByte(), byteReader.GetByte() };
             }
-            u.Context = (ContextEnum)byteReader.GetByte();
             if (u.Frame == FrameMessageEnum.Text)
             {
                 if (u.Mask != null)
@@ -48,7 +58,6 @@ namespace InfoWriterWebSocketServer.Utils
                 {
                     u.Payload = byteReader.GetText();
                 }
-                
             }
             return u;
              

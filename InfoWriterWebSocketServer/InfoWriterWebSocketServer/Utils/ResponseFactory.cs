@@ -46,6 +46,8 @@ namespace InfoWriterWebSocketServer.Utils
             return retBytes[0];
         }
 
+        public static
+
 
 
     }
