@@ -31,6 +31,8 @@ namespace InfoWriterWebSocketServer.Server
 
         public virtual void OnMessage(TcpClient client, Update u)
         {
+            var stream = client.GetStream();
+            stream.Write(ResponseFactory.Hello());
             Console.WriteLine(u.Payload);
         }
 
@@ -85,7 +87,8 @@ namespace InfoWriterWebSocketServer.Server
                     }
                     if(update.Frame == FrameMessageEnum.Text)
                     {
-                        OnMessage(client ,update);
+                        stream.Write(bytes);
+                        //OnMessage(client ,update);
                     }
                     lastMessageTimeSec = DateTimeOffset.Now.ToUnixTimeSeconds();
                 }
@@ -100,7 +103,7 @@ namespace InfoWriterWebSocketServer.Server
         }
         public void Disconnect(TcpClient client)
         {
-
+            var stream = client.GetStream();
         }
 
     }

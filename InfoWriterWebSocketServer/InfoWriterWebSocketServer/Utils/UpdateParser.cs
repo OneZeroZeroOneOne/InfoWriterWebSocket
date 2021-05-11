@@ -38,7 +38,13 @@ namespace InfoWriterWebSocketServer.Utils
             }
             else if (Convert.ToInt32(npba[0]) == 126)
             {
-                u.PayloadLength = Convert.ToInt32(new byte[2] { byteReader.GetByte(), byteReader.GetByte() });
+                byte[] b1 = new byte[1] { byteReader.GetByte() };
+                byte[] b2 = new byte[1] { byteReader.GetByte() };
+                var ba1 = new BitArray(b1);
+                var ba2 = new BitArray(b2);
+                //var a = new byte[2] { byteReader.GetByte(), byteReader.GetByte() };
+                //var m = new BitArray(a);
+                //u.PayloadLength = Convert.ToInt32(a);
             }
             else if (Convert.ToInt32(npba[0]) == 127)
             {

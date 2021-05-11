@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
-namespace InfoWriterWebSocketServer.Utils
+namespace InfoWriterWebSocketClient
 {
     public class ByteReader
     {
@@ -48,11 +48,12 @@ namespace InfoWriterWebSocketServer.Utils
         public byte[] Get8Bytes()
         {
             var b = new byte[8];
-            for(int i = 0; i<8; i++)
+            for (int i = 0; i < 8; i++)
             {
                 b[i] = _bytes[_index++];
             }
             return b;
         }
+
     }
 }

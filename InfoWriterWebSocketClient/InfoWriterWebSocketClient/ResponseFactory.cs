@@ -1,18 +1,16 @@
-﻿using InfoWriterWebSocketServer.Enums;
-using System;
+﻿using System;
 using System.Collections;
-using System.Security.Cryptography;
+using System.Collections.Generic;
 using System.Text;
-using System.Text.RegularExpressions;
 
-namespace InfoWriterWebSocketServer.Utils
+namespace InfoWriterWebSocketClient
 {
-    public class ResponseFactory
+    public static class ResponseFactory
     {
         public static byte[] Hello()
         {
             var messageBytes = Encoding.UTF8.GetBytes("Hello");
-            var mm = GetMaskBytes(true, messageBytes.Length);
+            var mm = GetMaskBytes(false, messageBytes.Length);
             return ConcateBytes(ConcateBytes(GetHeaderBytes(FrameMessageEnum.Text, true), mm.Bytes), ApplyMask(messageBytes, mm.EncodeBytes));
         }
 
@@ -28,44 +26,6 @@ namespace InfoWriterWebSocketServer.Utils
             var retBytes = new byte[1];
             hb.CopyTo(retBytes, 0);
             return retBytes;
-        }
-
-        public static byte[] Handshake(string data)
-        {
-            const string eol = "\r\n";
-            byte[] response = Encoding.UTF8.GetBytes("HTTP/1.1 101 Switching Protocols" + eol
-                + "Connection: Upgrade" + eol
-                + "Upgrade: websocket" + eol
-                + "Sec-WebSocket-Accept: " + Convert.ToBase64String(
-                    SHA1.Create().ComputeHash(
-                        Encoding.UTF8.GetBytes(
-                            new Regex("Sec-WebSocket-Key: (.*)").Match(data).Groups[1].Value.Trim() + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-                        )
-                    )
-                ) + eol
-                + eol);
-            return response;
-        }
-
-        public static byte[] Ping()
-        {
-            var h = new byte[1] { GetHeaderByte(FrameMessageEnum.Ping, true)};
-            //var m = new byte[1] { GetMaskByte(FrameMessageEnum.Ping, true) };
-            return h;
-        }
-
-        public static byte GetHeaderByte(FrameMessageEnum frame, bool isFullAnswer)
-        {
-            var hb = new BitArray(8);
-            hb[0] = isFullAnswer;
-            var fb = new BitArray(new byte[1] { (byte)frame });
-            hb[4] = fb[4];
-            hb[5] = fb[5];
-            hb[6] = fb[6];
-            hb[7] = fb[7];
-            var retBytes = new byte[1];
-            hb.CopyTo(retBytes, 0);
-            return retBytes[0];
         }
 
         public static MaskModel GetMaskBytes(bool haveMask, long payloadLength)
@@ -125,7 +85,7 @@ namespace InfoWriterWebSocketServer.Utils
             var rand = new Random();
             var retBytes = new byte[4];
             var b = new BitArray(32);
-            for (int i = 0; i < 32; i++)
+            for(int i = 0; i < 32; i++)
             {
                 b[i] = rand.Next(0, 100) > 50 ? true : false;
             }
@@ -158,9 +118,8 @@ namespace InfoWriterWebSocketServer.Utils
             }
             return nm;
         }
+
     }
-
-
 
     public class MaskModel
     {
