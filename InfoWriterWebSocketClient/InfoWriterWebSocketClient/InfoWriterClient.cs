@@ -12,6 +12,7 @@ namespace InfoWriterWebSocketClient
     {
         public InfoWriterClient(Uri u, IServiceProvider sp) : base(u, sp)
         {
+
         }
 
     }

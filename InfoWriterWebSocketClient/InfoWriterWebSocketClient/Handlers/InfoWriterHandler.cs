@@ -6,6 +6,7 @@ namespace InfoWriterWebSocketClient.Handlers
 {
     public class InfoWriterHandler : IHanlder
     {
+        public 
         public void Handle()
         {
             

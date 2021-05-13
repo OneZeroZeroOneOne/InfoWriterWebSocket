@@ -13,6 +13,8 @@ namespace InfoWriterWebSocketClient
             return messageBytes;
         }
 
+
+
         public static byte[] ConcateBytes(byte[] arr1, byte[] arr2)
         {
             var narr = new byte[arr1.Length + arr2.Length];

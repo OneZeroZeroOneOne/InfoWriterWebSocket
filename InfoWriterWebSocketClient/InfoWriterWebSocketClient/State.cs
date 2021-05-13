@@ -4,8 +4,4 @@ using System.Text;
 
 namespace InfoWriterWebSocketClient
 {
-    public class State<T>
-    {
-
-    }
 }
