@@ -47,15 +47,13 @@ namespace InfoWriterWebSocketServer.Server
             {
                 var updateParser = new UpdateParser();
                 var heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
-                int a = 0;
                 Pong(context.client);
                 while (context.client.Connected)
                 {
                     if (DateTimeOffset.Now.ToUnixTimeSeconds() - heartbeatTime > _timeoutSec)
                     {
                         Console.WriteLine("the client is not responding. detachment");
-                        ConectionClose(context.client, "heartbeat stopped");
-                        break;
+                        throw new Exception("heartbeat stopped");
                     }
                     Pong(context.client);
                     if (context.client.Available > 0)
@@ -71,8 +69,7 @@ namespace InfoWriterWebSocketServer.Server
                         }
                         foreach(var update in updates)
                         {
-                            Console.WriteLine($"update frame {a} - {update.Frame}");
-                            a++;
+                            Console.WriteLine($"update frame - {update.Frame}");
                             if (update.Frame == FrameMessageEnum.Pong)
                             {
                                 heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
@@ -89,8 +86,7 @@ namespace InfoWriterWebSocketServer.Server
                             }
                             else if (update.Frame == FrameMessageEnum.ConectionClose)
                             {
-                                ConectionClose(context.client, "client close connection");
-                                break;
+                                throw new Exception("client close connection");
                             }
                         }
                         
