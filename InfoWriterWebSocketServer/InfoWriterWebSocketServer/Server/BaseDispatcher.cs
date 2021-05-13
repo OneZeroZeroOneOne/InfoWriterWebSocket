@@ -3,6 +3,8 @@ using InfoWriterWebSocketServer.Models;
 using InfoWriterWebSocketServer.Server.Abstractions;
 using InfoWriterWebSocketServer.Utils;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +16,12 @@ namespace InfoWriterWebSocketServer.Server
     public class BaseDispatcher
     {
         public Dictionary<ContextEnum, Type> handlers = new Dictionary<ContextEnum, Type>();
-        private IServiceProvider _serviceProvider;
-        public float _timeoutSec = 5;
-        public string _contextSeparator = "<c>";
+        private IServiceProvider serviceProvider;
+        public float timeoutSec = 5;
 
-        public BaseDispatcher( IServiceProvider serviceProvider)
+        public BaseDispatcher( IServiceProvider sp)
         {
-            _serviceProvider = serviceProvider;
+            serviceProvider = sp;
         }
 
         public void AddHandler<T>(ContextEnum ce) where T : IHandler
@@ -39,26 +40,27 @@ namespace InfoWriterWebSocketServer.Server
 
         public void StartPolling(object obj)
         {
-            var scope = _serviceProvider.CreateScope();
+            var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<UserContext>();
-            context.client = (TcpClient)obj;
-            var stream = context.client.GetStream();
+            var client = (TcpClient)obj;
+            var stream = client.GetStream();
             try
             {
                 var updateParser = new UpdateParser();
                 var heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
-                Pong(context.client);
-                while (context.client.Connected)
+                Pong(client);
+                while (client.Connected)
                 {
-                    if (DateTimeOffset.Now.ToUnixTimeSeconds() - heartbeatTime > _timeoutSec)
+                    if (DateTimeOffset.Now.ToUnixTimeSeconds() - heartbeatTime > timeoutSec)
                     {
                         Console.WriteLine("the client is not responding. detachment");
+                        ConectionClose(client, "heartbeat stopped");
                         throw new Exception("heartbeat stopped");
                     }
-                    Pong(context.client);
-                    if (context.client.Available > 0)
+                    Pong(client);
+                    if (client.Available > 0)
                     {
-                        var available = context.client.Available;
+                        var available = client.Available;
                         byte[] bytes = new byte[available];
                         stream.Read(bytes, 0, available);
                         updateParser.SetBytes(bytes);
@@ -76,16 +78,19 @@ namespace InfoWriterWebSocketServer.Server
                             }
                             else if (update.Frame == FrameMessageEnum.Text)
                             {
-                                string[] parr = update.Payload.Split(_contextSeparator);
-                                if (parr.Length < 2) throw new Exception("context is absent");
-                                ContextEnum ce = (ContextEnum)int.Parse(parr.First());
-                                update.Payload = parr.Last();
+                                var data = (JObject)JsonConvert.DeserializeObject(update.Payload);
+                                ContextEnum ce = (ContextEnum)(data.ContainsKey("context") ? data["context"].Value<int>() : throw new Exception("context absent"));
                                 context.Update = update;
                                 var handler = GetHandler(ce, scope.ServiceProvider);
-                                handler.Handle();
+                                if (handler != null)
+                                {
+                                    context.contextEnum = ce;
+                                    var res = handler.Handle();
+                                }
                             }
                             else if (update.Frame == FrameMessageEnum.ConectionClose)
                             {
+                                ConectionClose(client, "client close connection");
                                 throw new Exception("client close connection");
                             }
                         }
@@ -96,10 +101,10 @@ namespace InfoWriterWebSocketServer.Server
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                ConectionClose(context.client, ex.Message);
+                
             }
             stream.Close();
-            context.client.Close();
+            client.Close();
         }
 
         public void Pong(TcpClient client)
@@ -118,12 +123,7 @@ namespace InfoWriterWebSocketServer.Server
 
         public void SetTimeoutSec(float timeInSecFloat)
         {
-            _timeoutSec = timeInSecFloat;
-        }
-
-        public void SetContextSeparatorSec(string sep)
-        {
-            _contextSeparator = sep;
+            timeoutSec = timeInSecFloat;
         }
     }
 }

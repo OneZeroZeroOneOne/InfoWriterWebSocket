@@ -16,7 +16,7 @@ namespace InfoWriterWebSocketServer
             var ser = new ServiceCollection();
             ser.AddScoped<UserContext>();
             ser.AddScoped<TcpClient>();
-
+            ser.AddScoped<DemoService>();
 
             var ds = new BaseDispatcher(ser.BuildServiceProvider());
             ds.AddHandler<InfoWriterHandler>(ContextEnum.Info);

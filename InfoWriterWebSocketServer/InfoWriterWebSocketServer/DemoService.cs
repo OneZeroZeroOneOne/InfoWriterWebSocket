@@ -6,10 +6,12 @@ namespace InfoWriterWebSocketServer
 {
     public class DemoService
     {
+        public int result;
         public int GetRand()
         {
             var r = new Random();
-            return r.Next(0, 100);
+            result = r.Next(0, 100);
+            return result;
         }
     }
 }

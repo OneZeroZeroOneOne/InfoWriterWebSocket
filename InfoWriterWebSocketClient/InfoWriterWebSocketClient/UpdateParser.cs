@@ -12,9 +12,9 @@ namespace InfoWriterWebSocketClient
         {
             _payload = payload;
         }
-        public Update Parse()
+        public Update Parse(string separator)
         {
-            string[] parr = _payload.Split("<c>");
+            string[] parr = _payload.Split(separator);
             return new Update
             {
                 Context = (ContextEnum)int.Parse(parr.First()),
