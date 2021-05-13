@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Text;
+﻿using InfoWriterWebSocketServer.Enums;
+using InfoWriterWebSocketServer.Extentions;
+using InfoWriterWebSocketServer.Models;
+using InfoWriterWebSocketServer.Utils;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Text.RegularExpressions;
-using InfoWriterWebSocketServer.Extentions;
-using InfoWriterWebSocketServer.Utils;
-using InfoWriterWebSocketServer.Enums;
-using InfoWriterWebSocketServer.Models;
 
 namespace InfoWriterWebSocketServer.Server
 {
@@ -16,26 +15,17 @@ namespace InfoWriterWebSocketServer.Server
     {
         private string _host;
         private int _port;
-        private float _timeoutSec = 5;
+        private BaseDispatcher _dispatcherPrototype;
 
-        public void SetHostPort(string host, int port)
+        public BaseService(BaseDispatcher disp, string host, int port)
         {
             _host = host;
             _port = port;
+            _dispatcherPrototype = disp;
         }
 
-        public void SetTimeoutSec(float timeInSecFloat)
-        {
-            _timeoutSec = timeInSecFloat;
-        }
-
-        public virtual void OnMessage(TcpClient client, Update u)
-        {
-            var stream = client.GetStream();
-            stream.Write(ResponseFactory.Hello());
-            Console.WriteLine(u.Payload);
-        }
-
+        
+        
         public void StartListen()
         {
             Console.WriteLine("StartListen");
@@ -49,62 +39,12 @@ namespace InfoWriterWebSocketServer.Server
             {
                 Console.Write("Waiting for a connection... ");
                 TcpClient client = server.AcceptTcpClient();
+                client.RFC6455Handshake();
                 Console.WriteLine("Connected!");
-                Thread myThread = new Thread(new ParameterizedThreadStart(StartPolling));
+                Thread myThread = new Thread(new ParameterizedThreadStart(_dispatcherPrototype.StartPolling));
                 myThread.Start(client);
 
             }
-
         }
-
-        public void StartPolling(object obj)
-        {
-            TcpClient client = (TcpClient)obj;
-            var stream = client.GetStream();
-            client.RFC6455Handshake();
-            var updateParser = new UpdateParser();
-            var lastMessageTimeSec = DateTimeOffset.Now.ToUnixTimeSeconds();
-            while (true)
-            {
-                if(DateTimeOffset.Now.ToUnixTimeSeconds() - lastMessageTimeSec > _timeoutSec)
-                {
-                    Console.WriteLine("the client is not responding. detachment");
-                    stream.Close();
-                    client.Close();
-                    break;
-                }
-                if (client.Available > 0)
-                {
-
-                    byte[] bytes = new byte[client.Available];
-                    stream.Read(bytes, 0, client.Available);
-                    updateParser.SetBytes(bytes);
-                    var update = updateParser.Parse();
-                    Console.WriteLine($"update frame - {update.Frame}");
-                    if(update.Frame == FrameMessageEnum.Ping)
-                    {
-                        Ping(client);
-                    }
-                    if(update.Frame == FrameMessageEnum.Text)
-                    {
-                        stream.Write(bytes);
-                        //OnMessage(client ,update);
-                    }
-                    lastMessageTimeSec = DateTimeOffset.Now.ToUnixTimeSeconds();
-                }
-            }
-            
-        }
-
-        public void Ping(TcpClient client)
-        {
-            var stream = client.GetStream();
-            stream.Write(ResponseFactory.Ping());
-        }
-        public void Disconnect(TcpClient client)
-        {
-            var stream = client.GetStream();
-        }
-
     }
 }

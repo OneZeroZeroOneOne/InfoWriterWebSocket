@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Threading;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace InfoWriterWebSocketClient
 {
@@ -9,22 +10,9 @@ namespace InfoWriterWebSocketClient
     {
         static async Task Main(string[] args)
         {
-            var messageHello = ResponseFactory.Hello();
-
-            Console.ReadLine();
-            //var b = new byte[];
-            /*await wsc.SendAsync();
-
-            while (wsc.State == WebSocketState.Open)
-            {
-                Console.Write("Input message ('exit' to exit): ");
-                string msg = Console.ReadLine();
-                if (msg == "exit")
-                {
-                    break;
-                }
-            }
-            */
+            var iwc = new InfoWriterClient(new Uri("ws://127.0.0.1:7776"));
+            await iwc.Connect();
+            await iwc.StartPoling();
         }
     }
 }

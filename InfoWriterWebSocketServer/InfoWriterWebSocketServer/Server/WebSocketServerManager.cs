@@ -15,11 +15,9 @@ namespace InfoWriterWebSocketServer.Server
             _servicesList = new List<BaseService>();
         }
 
-        public void AddWebSocketService<T>(int port) where T : BaseService, new()
+        public void AddWebSocketService(BaseService service)
         {
-            T bs = new T();
-            bs.SetHostPort(_host, port);
-            _servicesList.Add(bs);
+            _servicesList.Add(service);
         }
 
         public void Start()

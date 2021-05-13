@@ -10,5 +10,6 @@ namespace InfoWriterWebSocketServer.Enums
         Binary = 0x2,
         Ping = 0x9,
         ConectionClose = 0x8,
+        Pong = 0xA,
     }
 }
