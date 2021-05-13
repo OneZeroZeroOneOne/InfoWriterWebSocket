@@ -162,18 +162,7 @@ namespace InfoWriterWebSocketServer.Utils
             }
             return narr;
         }
-        public static byte[] ApplyMask(byte[] arr, byte[] mask)
-        {
-            var nm = new byte[arr.Length];
-            for (int i = 0; i < arr.Length; i++)
-            {
-                nm[i] = (Byte)(arr[i] ^ mask[i % 4]);
-            }
-            return nm;
-        }
     }
-
-
 
     public class MaskModel
     {

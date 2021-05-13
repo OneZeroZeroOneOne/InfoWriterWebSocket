@@ -8,54 +8,47 @@ namespace InfoWriterWebSocketServer.Utils
 {
     public class ByteReader
     {
-        private byte[] _bytes;
-        private int _index;
-        public ByteReader(byte[] bytes)
+        public readonly byte[] bytes;
+        public long index;
+        public ByteReader(byte[] b)
         {
-            _bytes = bytes;
-            _index = 0;
+            bytes = b;
+            index = 0;
         }
 
         public BitArray GetBits()
         {
-            byte[] ba = new byte[1] { _bytes[_index++] };
+            byte[] ba = new byte[1] { bytes[index++] };
             return new BitArray(ba);
         }
 
-        public string GetText()
+        public string GetText(long length)
         {
-            byte[] b = new byte[1024];
-            _bytes.Skip(_index).ToArray().CopyTo(b, 0);
-            return Encoding.UTF8.GetString(b);
-        }
-
-        public string GetText(byte[] mask)
-        {
-            var enc = _bytes.Skip(_index).ToArray();
-            byte[] b = new byte[enc.Length];
-            for (int i = 0; i < enc.Length; i++)
+            byte[] b = new byte[length];
+            for(int i = 0; i<length; i++)
             {
-                b[i] = (Byte)(enc[i] ^ mask[i % 4]);
+                b[i] = bytes[i + index];
             }
+            index += length;
             return Encoding.UTF8.GetString(b);
         }
 
         public byte GetByte()
         {
-            return _bytes[_index++];
+            return bytes[index++];
         }
 
-        public byte[] Get8Bytes()
+        public byte[] Get8BytesIntPayloadLenght()
         {
             var b = new byte[8];
             for(int i = 0; i<8; i++)
             {
-                b[i] = _bytes[_index++];
+                b[i] = bytes[index++];
             }
             return b;
         }
 
-        public int Get2ByteIntPayloadLenght()
+        public int Get2BytesIntPayloadLenght()
         {
             var nb = new byte[2];
             for(int i = 0; i<2; i++)
@@ -82,6 +75,17 @@ namespace InfoWriterWebSocketServer.Utils
                 index++;
             }
             return narr;
+        }
+
+        public byte[] GetPaylaod(long length)
+        {
+            byte[] b = new byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                b[i] = bytes[i + index];
+            }
+            index += length;
+            return b;
         }
     }
 }

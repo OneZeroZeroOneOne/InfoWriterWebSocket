@@ -43,19 +43,18 @@ namespace InfoWriterWebSocketServer.Server
             var context = scope.ServiceProvider.GetRequiredService<UserContext>();
             context.client = (TcpClient)obj;
             var stream = context.client.GetStream();
-            /*try
-            {*/
+            try
+            {
                 var updateParser = new UpdateParser();
                 var heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
+                int a = 0;
                 Pong(context.client);
-                while (true)
+                while (context.client.Connected)
                 {
                     if (DateTimeOffset.Now.ToUnixTimeSeconds() - heartbeatTime > _timeoutSec)
                     {
                         Console.WriteLine("the client is not responding. detachment");
                         ConectionClose(context.client, "heartbeat stopped");
-                        stream.Close();
-                        context.client.Close();
                         break;
                     }
                     Pong(context.client);
@@ -65,37 +64,46 @@ namespace InfoWriterWebSocketServer.Server
                         byte[] bytes = new byte[available];
                         stream.Read(bytes, 0, available);
                         updateParser.SetBytes(bytes);
-                        var update = updateParser.Parse();
-                        Console.WriteLine($"update frame - {update.Frame}");
-                        if (update.Frame == FrameMessageEnum.Pong)
+                        var updates = updateParser.Parse();
+                        if(updates.Count >= 2)
                         {
-                            heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
+                            Console.WriteLine($"updates.Count = {updates.Count}");
                         }
-                        else if (update.Frame == FrameMessageEnum.Text)
+                        foreach(var update in updates)
                         {
-                            string[] parr = update.Payload.Split(_contextSeparator);
-                            if (parr.Length < 2) throw new Exception("context is absent");
-                            ContextEnum ce = (ContextEnum)int.Parse(parr.First());
-                            update.Payload = parr.Last();
-                            context.Update = update;
-                            var handler = GetHandler(ce, scope.ServiceProvider);
-                            handler.Handle();
+                            Console.WriteLine($"update frame {a} - {update.Frame}");
+                            a++;
+                            if (update.Frame == FrameMessageEnum.Pong)
+                            {
+                                heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
+                            }
+                            else if (update.Frame == FrameMessageEnum.Text)
+                            {
+                                string[] parr = update.Payload.Split(_contextSeparator);
+                                if (parr.Length < 2) throw new Exception("context is absent");
+                                ContextEnum ce = (ContextEnum)int.Parse(parr.First());
+                                update.Payload = parr.Last();
+                                context.Update = update;
+                                var handler = GetHandler(ce, scope.ServiceProvider);
+                                handler.Handle();
+                            }
+                            else if (update.Frame == FrameMessageEnum.ConectionClose)
+                            {
+                                ConectionClose(context.client, "client close connection");
+                                break;
+                            }
                         }
-                        else if (update.Frame == FrameMessageEnum.ConectionClose)
-                        {
-                            ConectionClose(context.client, "client close connection");
-                            break;
-                        }
+                        
                     }
                 }
-            /*}
+            }
             catch (Exception ex)
             {
-                Console.WriteLine($"error: {ex.Message}");
-                ConectionClose(context.client, $"error: {ex.Message}");
-                stream.Close();
-                context.client.Close();
-            }*/
+                Console.WriteLine(ex.Message);
+                ConectionClose(context.client, ex.Message);
+            }
+            stream.Close();
+            context.client.Close();
         }
 
         public void Pong(TcpClient client)
