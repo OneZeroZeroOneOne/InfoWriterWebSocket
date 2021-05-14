@@ -1,13 +1,14 @@
-﻿using InfoWriterWebSocketServer.Enums;
+﻿using InfoWriterWebSocketClient.Client.Enums;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace InfoWriterWebSocketServer.Utils
+namespace InfoWriterWebSocketClient.Client.Utils
 {
-    public class ResponseFactory
+    public static class ResponseFactory
     {
         public static byte[] Hello()
         {
@@ -54,11 +55,11 @@ namespace InfoWriterWebSocketServer.Utils
             return response;
         }
 
-        public static byte[] Pong()
+        public static byte[] Ping()
         {
-            var messageBytes = Encoding.UTF8.GetBytes("pong");
+            var messageBytes = Encoding.UTF8.GetBytes("ping");
             var mm = GetMask(false, messageBytes.Length);
-            return ConcateBytes(ConcateBytes(GetHeaderBytes(FrameMessageEnum.Pong, true), mm.Bytes), messageBytes);
+            return ConcateBytes(ConcateBytes(GetHeaderBytes(FrameMessageEnum.Ping, true), mm.Bytes), messageBytes);
         }
 
         public static byte[] ConectionClose(string cause)

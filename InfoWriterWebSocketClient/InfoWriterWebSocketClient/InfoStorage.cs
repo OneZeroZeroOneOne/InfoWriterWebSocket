@@ -4,9 +4,8 @@ using System.Text;
 
 namespace InfoWriterWebSocketClient
 {
-    public class Update
+    public class InfoStorage
     {
-        public string Payload { get; set; }
-        public ContextEnum Context { get; set; }
+        public long lastInfoReportTime;
     }
 }

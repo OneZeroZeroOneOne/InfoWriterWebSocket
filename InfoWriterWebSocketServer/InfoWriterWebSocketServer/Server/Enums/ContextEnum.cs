@@ -9,5 +9,6 @@ namespace InfoWriterWebSocketServer.Enums
         Info = 1,
         Hello = 2,
         Text = 3,
+        InfoStatusResponce = 4,
     }
 }

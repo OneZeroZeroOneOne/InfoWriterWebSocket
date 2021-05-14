@@ -4,8 +4,8 @@ using System.Text;
 
 namespace InfoWriterWebSocketServer.Server.Abstractions
 {
-    public interface IHandler
+    public interface IHandlResult
     {
-        public IHandlResult Handle(string model);
+        public string ToJson();
     }
 }

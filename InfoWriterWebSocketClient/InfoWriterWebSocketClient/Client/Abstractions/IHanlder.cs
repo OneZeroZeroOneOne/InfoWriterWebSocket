@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace InfoWriterWebSocketClient
+namespace InfoWriterWebSocketClient.Client.Abstractions
 {
     public interface IHanlder
     {
-        public void Handle();
+        public IHandlResult Handle(string json);
     }
 }

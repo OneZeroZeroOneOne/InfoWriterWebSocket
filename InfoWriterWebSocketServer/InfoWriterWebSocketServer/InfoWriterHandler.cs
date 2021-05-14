@@ -1,7 +1,9 @@
-﻿using InfoWriterWebSocketServer.Server;
+﻿using InfoWriterWebSocketServer.Enums;
+using InfoWriterWebSocketServer.Server;
 using InfoWriterWebSocketServer.Server.Abstractions;
 using InfoWriterWebSocketServer.Utils;
 using System;
+using System.Text.Json;
 
 namespace InfoWriterWebSocketServer
 {
@@ -14,14 +16,20 @@ namespace InfoWriterWebSocketServer
             userContext = uc;
             demoService = ds;
         }
-        public void Handle()
+        public IHandlResult Handle(string model)
         {
-            Console.WriteLine($"{demoService.result}");
+            var new1 = new InfoModel();
+            new1.context = 2;
+            new1.dotnetversion = "123";
+            Console.WriteLine($"last rand num - {demoService.result}");
             demoService.GetRand();
+            Console.WriteLine($"payload - {userContext.Update.Payload}");
+            InfoModel infomodel = JsonSerializer.Deserialize<InfoModel>(model);
             
-            Console.WriteLine(userContext.Update.Payload);
-            var stream = userContext.client.GetStream();
-            stream.Write(ResponseFactory.Text(userContext.Update.Payload));
+            var res = new InfoHandlResult();
+            res.context = ContextEnum.InfoStatusResponce;
+            res.status = "Ok";
+            return res;
         }
     }
 }

@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace InfoWriterWebSocketServer.Server.Models
+namespace InfoWriterWebSocketServer.Server.Abstractions
 {
-    public class HandlResult
+    public interface  IModel
     {
-
     }
 }

@@ -8,6 +8,6 @@ namespace InfoWriterWebSocketServer.Server
     {
         public ContextEnum contextEnum;
         public Update Update { get; set; }
-        public Guid Id { get; set; }
+        //public Guid Id { get; set; }
     }
 }

@@ -1,14 +1,14 @@
-﻿using InfoWriterWebSocketServer.Enums;
-using InfoWriterWebSocketServer.Extentions;
-using InfoWriterWebSocketServer.Models;
+﻿using InfoWriterWebSocketClient.Client.Enums;
+using InfoWriterWebSocketClient.Client.Extentions;
+using InfoWriterWebSocketClient.Client.Models;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace InfoWriterWebSocketServer.Utils
+namespace InfoWriterWebSocketClient.Client.Utils
 {
-
     public class UpdateParser
     {
         ByteReader byteReader;
@@ -21,7 +21,7 @@ namespace InfoWriterWebSocketServer.Utils
         public List<Update> Parse()
         {
             var retList = new List<Update>();
-            while(byteReader.bytes.Length > byteReader.index)
+            while (byteReader.bytes.Length > byteReader.index)
             {
                 var hb = byteReader.GetBits();
                 var frameTypeBitArr = new bool[] { hb[0], hb[1], hb[2], hb[3], false, false, false, false };
@@ -70,8 +70,6 @@ namespace InfoWriterWebSocketServer.Utils
                 retList.Add(u);
             }
             return retList;
-             
         }
-
     }
 }

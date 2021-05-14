@@ -13,27 +13,39 @@ using System.Text;
 
 namespace InfoWriterWebSocketServer.Server
 {
-    public class BaseDispatcher
+    public class Dispatcher
     {
         public Dictionary<ContextEnum, Type> handlers = new Dictionary<ContextEnum, Type>();
+        public Dictionary<ContextEnum, Type> handlerModels = new Dictionary<ContextEnum, Type>();
         private IServiceProvider serviceProvider;
-        public float timeoutSec = 5;
+        public float timeoutSec = 999999999;
 
-        public BaseDispatcher( IServiceProvider sp)
+        public Dispatcher( IServiceProvider sp)
         {
             serviceProvider = sp;
         }
 
-        public void AddHandler<T>(ContextEnum ce) where T : IHandler
+        public void AddHandler<THandler, TModel>(ContextEnum ce) where THandler : IHandler
         {
-            handlers[ce] = typeof(T);
+            handlers[ce] = typeof(THandler);
+            handlerModels[ce] = typeof(TModel);
         }
 
         public IHandler GetHandler(ContextEnum ce, IServiceProvider serviceProvider)
         {
             if (handlers.ContainsKey(ce))
             {
+                var t = handlerModels[ce];
                 return (IHandler)ActivatorUtilities.CreateInstance(serviceProvider, handlers[ce]);
+            }
+            return null;
+        }
+
+        public Type GetHandlerModelType(ContextEnum ce)
+        {
+            if (handlerModels.ContainsKey(ce))
+            {
+                return handlerModels[ce];
             }
             return null;
         }
@@ -57,7 +69,6 @@ namespace InfoWriterWebSocketServer.Server
                         ConectionClose(client, "heartbeat stopped");
                         throw new Exception("heartbeat stopped");
                     }
-                    Pong(client);
                     if (client.Available > 0)
                     {
                         var available = client.Available;
@@ -65,16 +76,12 @@ namespace InfoWriterWebSocketServer.Server
                         stream.Read(bytes, 0, available);
                         updateParser.SetBytes(bytes);
                         var updates = updateParser.Parse();
-                        if(updates.Count >= 2)
-                        {
-                            Console.WriteLine($"updates.Count = {updates.Count}");
-                        }
                         foreach(var update in updates)
                         {
-                            Console.WriteLine($"update frame - {update.Frame}");
-                            if (update.Frame == FrameMessageEnum.Pong)
+                            if (update.Frame == FrameMessageEnum.Ping)
                             {
                                 heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
+                                Pong(client);
                             }
                             else if (update.Frame == FrameMessageEnum.Text)
                             {
@@ -82,10 +89,14 @@ namespace InfoWriterWebSocketServer.Server
                                 ContextEnum ce = (ContextEnum)(data.ContainsKey("context") ? data["context"].Value<int>() : throw new Exception("context absent"));
                                 context.Update = update;
                                 var handler = GetHandler(ce, scope.ServiceProvider);
+                                //var modelType = GetHandlerModelType(ce);
+                                //var t = ActivatorUtilities.CreateInstance(serviceProvider, modelType);
+                                //Console.WriteLine(modelType);
                                 if (handler != null)
                                 {
                                     context.contextEnum = ce;
-                                    var res = handler.Handle();
+                                    var res = handler.Handle(update.Payload);
+                                    stream.Write(ResponseFactory.Text(res.ToJson()));
                                 }
                             }
                             else if (update.Frame == FrameMessageEnum.ConectionClose)
@@ -109,9 +120,8 @@ namespace InfoWriterWebSocketServer.Server
 
         public void Pong(TcpClient client)
         {
-            Console.WriteLine("Pong");
             var stream = client.GetStream();
-            var msg = ResponseFactory.Ping();
+            var msg = ResponseFactory.Pong();
             stream.Write(msg, 0, msg.Length);
         }
         public void ConectionClose(TcpClient client, string cause)

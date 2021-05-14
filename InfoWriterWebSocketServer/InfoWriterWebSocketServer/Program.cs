@@ -18,8 +18,8 @@ namespace InfoWriterWebSocketServer
             ser.AddScoped<TcpClient>();
             ser.AddScoped<DemoService>();
 
-            var ds = new BaseDispatcher(ser.BuildServiceProvider());
-            ds.AddHandler<InfoWriterHandler>(ContextEnum.Info);
+            var ds = new Dispatcher(ser.BuildServiceProvider());
+            ds.AddHandler<InfoWriterHandler, InfoModel>(ContextEnum.Info);
             var bs = new BaseService(ds, "127.0.0.1", 7776);
             var wssm = new WebSocketServerManager("127.0.0.1");
             wssm.AddWebSocketService(bs);

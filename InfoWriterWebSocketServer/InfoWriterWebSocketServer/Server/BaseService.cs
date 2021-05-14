@@ -15,9 +15,9 @@ namespace InfoWriterWebSocketServer.Server
     {
         private string _host;
         private int _port;
-        private BaseDispatcher _dispatcherPrototype;
+        private Dispatcher _dispatcherPrototype;
 
-        public BaseService(BaseDispatcher disp, string host, int port)
+        public BaseService(Dispatcher disp, string host, int port)
         {
             _host = host;
             _port = port;
