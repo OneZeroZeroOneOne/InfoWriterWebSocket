@@ -10,13 +10,6 @@ namespace InfoWriterWebSocketClient.Client.Utils
 {
     public static class ResponseFactory
     {
-        public static byte[] Hello()
-        {
-            var messageBytes = ConcateBytes(Encoding.UTF8.GetBytes($"{(int)ContextEnum.Hello}<c>Hello"), new byte[1] { (byte)0 });
-            var mm = GetMask(false, messageBytes.Length);
-            return ConcateBytes(ConcateBytes(GetHeaderBytes(FrameMessageEnum.Text, true), mm.Bytes), messageBytes);
-        }
-
         public static byte[] Text(string text)
         {
             var messageBytes = Encoding.UTF8.GetBytes(text);

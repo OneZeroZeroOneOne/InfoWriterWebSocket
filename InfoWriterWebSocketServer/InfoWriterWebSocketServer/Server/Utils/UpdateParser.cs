@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace InfoWriterWebSocketServer.Utils
+namespace InfoWriterWebSocketServer.Server.Utils
 {
 
     public class UpdateParser

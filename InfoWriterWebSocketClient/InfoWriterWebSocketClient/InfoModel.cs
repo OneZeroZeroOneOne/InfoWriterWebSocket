@@ -12,6 +12,7 @@ namespace InfoWriterWebSocketClient
         public string osname { get; set; }
         public string timezone { get; set; }
         public string dotnetversion { get; set; }
+        public string compname { get; set; }
         public string ToJson()
         {
             string json = JsonSerializer.Serialize<InfoModel>(this);

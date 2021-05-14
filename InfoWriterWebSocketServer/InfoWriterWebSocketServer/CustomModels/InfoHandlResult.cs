@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
-namespace InfoWriterWebSocketServer
+namespace InfoWriterWebSocketServer.CustomModels
 {
     public class InfoHandlResult : IHandlResult
     {

@@ -19,7 +19,7 @@ namespace InfoWriterWebSocketClient.Client
         public IServiceProvider serviceProvider;
         public Dictionary<ContextEnum, Type> handlers = new Dictionary<ContextEnum, Type>();
         public List<Type> middlewares = new List<Type>();
-        public int timeout = 999999999;
+        public int timeout = 10;
         public BaseClient(string h, int p, IServiceProvider sp)
         {
             serviceProvider = sp;

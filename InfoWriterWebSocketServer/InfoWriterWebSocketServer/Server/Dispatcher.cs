@@ -1,15 +1,12 @@
 ﻿using InfoWriterWebSocketServer.Enums;
-using InfoWriterWebSocketServer.Models;
 using InfoWriterWebSocketServer.Server.Abstractions;
-using InfoWriterWebSocketServer.Utils;
+using InfoWriterWebSocketServer.Server.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 
 namespace InfoWriterWebSocketServer.Server
 {
@@ -17,10 +14,13 @@ namespace InfoWriterWebSocketServer.Server
     {
         public Dictionary<ContextEnum, Type> handlers = new Dictionary<ContextEnum, Type>();
         public Dictionary<ContextEnum, Type> handlerModels = new Dictionary<ContextEnum, Type>();
+        public List<Type> middlewares = new List<Type>();
+        public Type onSturtup;
+        public Type onShutdown;
         private IServiceProvider serviceProvider;
-        public float timeoutSec = 999999999;
+        public float timeoutSec = 10;
 
-        public Dispatcher( IServiceProvider sp)
+        public Dispatcher(IServiceProvider sp)
         {
             serviceProvider = sp;
         }
@@ -29,6 +29,11 @@ namespace InfoWriterWebSocketServer.Server
         {
             handlers[ce] = typeof(THandler);
             handlerModels[ce] = typeof(TModel);
+        }
+
+        public void AddMiddleware<T>()
+        {
+            middlewares.Add(typeof(T));
         }
 
         public IHandler GetHandler(ContextEnum ce, IServiceProvider serviceProvider)
@@ -50,8 +55,20 @@ namespace InfoWriterWebSocketServer.Server
             return null;
         }
 
+        public void OnSturtup<TSturtup>()
+        {
+            onSturtup = typeof(TSturtup);
+        }
+
+        public void OnShutdown<TSturtup>()
+        {
+            onShutdown = typeof(TSturtup);
+        }
+
+
         public void StartPolling(object obj)
         {
+            Console.WriteLine($"New connection guid {Guid.NewGuid()}");
             var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<UserContext>();
             var client = (TcpClient)obj;
@@ -60,7 +77,18 @@ namespace InfoWriterWebSocketServer.Server
             {
                 var updateParser = new UpdateParser();
                 var heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
+                Console.WriteLine("Send first pong");
                 Pong(client);
+                Console.WriteLine("after send first pong");
+                if (onSturtup != null)
+                {
+                    var st = (ISturtup)ActivatorUtilities.CreateInstance(scope.ServiceProvider, onSturtup);
+                    var res = st.OnSturtup();
+                    if(res != null)
+                    {
+                        stream.Write(ResponseFactory.Text(res.ToJson()));
+                    }
+                }
                 while (client.Connected)
                 {
                     if (DateTimeOffset.Now.ToUnixTimeSeconds() - heartbeatTime > timeoutSec)
@@ -78,6 +106,15 @@ namespace InfoWriterWebSocketServer.Server
                         var updates = updateParser.Parse();
                         foreach(var update in updates)
                         {
+                            foreach (var middleware in middlewares)
+                            {
+                                var middlewareObj = (IMiddleware)ActivatorUtilities.CreateInstance(scope.ServiceProvider, middleware);
+                                var res = middlewareObj.Execute();
+                                if (res != null)
+                                {
+                                    stream.Write(ResponseFactory.Text(res.ToJson()));
+                                }
+                            }
                             if (update.Frame == FrameMessageEnum.Ping)
                             {
                                 heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
@@ -89,14 +126,14 @@ namespace InfoWriterWebSocketServer.Server
                                 ContextEnum ce = (ContextEnum)(data.ContainsKey("context") ? data["context"].Value<int>() : throw new Exception("context absent"));
                                 context.Update = update;
                                 var handler = GetHandler(ce, scope.ServiceProvider);
-                                //var modelType = GetHandlerModelType(ce);
-                                //var t = ActivatorUtilities.CreateInstance(serviceProvider, modelType);
-                                //Console.WriteLine(modelType);
                                 if (handler != null)
                                 {
                                     context.contextEnum = ce;
                                     var res = handler.Handle(update.Payload);
-                                    stream.Write(ResponseFactory.Text(res.ToJson()));
+                                    if (res != null)
+                                    {
+                                        stream.Write(ResponseFactory.Text(res.ToJson()));
+                                    }
                                 }
                             }
                             else if (update.Frame == FrameMessageEnum.ConectionClose)
@@ -113,6 +150,11 @@ namespace InfoWriterWebSocketServer.Server
             {
                 Console.WriteLine(ex.Message);
                 
+            }
+            if (onShutdown != null)
+            {
+                var st = (IShutdown)ActivatorUtilities.CreateInstance(scope.ServiceProvider, onShutdown);
+                st.OnShutdown();
             }
             stream.Close();
             client.Close();

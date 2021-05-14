@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace InfoWriterWebSocketServer.Utils
+namespace InfoWriterWebSocketServer.Server.Utils
 {
     public class ResponseFactory
     {

@@ -4,7 +4,7 @@ using System.Text;
 using System.Collections;
 using System.Linq;
 
-namespace InfoWriterWebSocketServer.Utils
+namespace InfoWriterWebSocketServer.Server.Utils
 {
     public class ByteReader
     {
@@ -55,7 +55,7 @@ namespace InfoWriterWebSocketServer.Utils
             {
                 nb[i] = GetByte();
             }
-            Array.Reverse(nb);
+            //Array.Reverse(nb);
             var a = ConcateBytes(nb, new byte[2]);
             return BitConverter.ToInt32(a);
         }

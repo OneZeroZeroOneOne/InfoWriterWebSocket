@@ -30,7 +30,8 @@ namespace InfoWriterWebSocketClient
                     osname = Environment.OSVersion.ToString(),
                     context = (int)ContextEnum.Info,
                     dotnetversion = Environment.Version.ToString(),
-                    timezone = TimeZone.CurrentTimeZone.ToString()
+                    timezone = TimeZone.CurrentTimeZone.ToString(),
+                    compname = Environment.MachineName
                 };
                 return im;
             }
