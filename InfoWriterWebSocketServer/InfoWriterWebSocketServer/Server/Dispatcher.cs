@@ -102,7 +102,6 @@ namespace InfoWriterWebSocketServer.Server
                     if (DateTimeOffset.Now.ToUnixTimeSeconds() - heartbeatTime > timeoutSec)
                     {
                         Console.WriteLine("the client is not responding. detachment");
-                        ConectionClose(context, "heartbeat stopped");
                         throw new Exception("heartbeat stopped");
                     }
                     if (client.Available > 0)
@@ -145,7 +144,6 @@ namespace InfoWriterWebSocketServer.Server
                             }
                             else if (update.Frame == FrameMessageEnum.ConectionClose)
                             {
-                                ConectionClose(context, "client close connection");
                                 throw new Exception("client close connection");
                             }
                         }
@@ -154,6 +152,7 @@ namespace InfoWriterWebSocketServer.Server
             }
             catch (Exception ex)
             {
+                ConectionClose(context, ex.Message);
                 Console.WriteLine(ex.Message);
             }
             if (onShutdown != null)
