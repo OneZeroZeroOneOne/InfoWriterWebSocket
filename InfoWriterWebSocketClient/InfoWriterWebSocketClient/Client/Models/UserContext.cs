@@ -1,11 +1,12 @@
-﻿using InfoWriterWebSocketServer.Enums;
-using InfoWriterWebSocketServer.Models;
+﻿using InfoWriterWebSocketClient.Client.Enums;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 
-namespace InfoWriterWebSocketServer.Server.Models
+namespace InfoWriterWebSocketClient.Client.Models
 {
     public class UserContext
     {

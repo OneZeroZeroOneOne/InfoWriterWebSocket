@@ -1,8 +1,8 @@
 ﻿using InfoWriterWebSocketServer.CustomModels;
 using InfoWriterWebSocketServer.CustomUtilities;
 using InfoWriterWebSocketServer.Enums;
-using InfoWriterWebSocketServer.Server;
 using InfoWriterWebSocketServer.Server.Abstractions;
+using InfoWriterWebSocketServer.Server.Models;
 using System;
 using System.Text.Json;
 

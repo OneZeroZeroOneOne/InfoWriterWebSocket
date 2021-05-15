@@ -1,6 +1,8 @@
 ﻿using InfoWriterWebSocketClient.Client.Abstractions;
+using InfoWriterWebSocketClient.Client.Base;
 using InfoWriterWebSocketClient.Client.Enums;
 using InfoWriterWebSocketClient.Client.Extentions;
+using InfoWriterWebSocketClient.Client.Models;
 using InfoWriterWebSocketClient.Client.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -8,6 +10,8 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 
 namespace InfoWriterWebSocketClient.Client
 {
@@ -19,6 +23,7 @@ namespace InfoWriterWebSocketClient.Client
         public IServiceProvider serviceProvider;
         public Dictionary<ContextEnum, Type> handlers = new Dictionary<ContextEnum, Type>();
         public List<Type> middlewares = new List<Type>();
+        public List<Type> parallelChecks = new List<Type>();
         public int timeout = 10;
         public BaseClient(string h, int p, IServiceProvider sp)
         {
@@ -43,6 +48,11 @@ namespace InfoWriterWebSocketClient.Client
             middlewares.Add(typeof(T));
         }
 
+        public void RegisterParallelCheck<T>()
+        {
+            parallelChecks.Add(typeof(T));
+        }
+
         public IHanlder GetHandler(ContextEnum ce)
         {
             if (handlers.ContainsKey(ce))
@@ -55,6 +65,18 @@ namespace InfoWriterWebSocketClient.Client
         public void StartPoling()
         {
             var stream = client.GetStream();
+            var context = serviceProvider.GetRequiredService<UserContext>();
+            context.Client = client;
+            CancellationTokenSource cts = new CancellationTokenSource();
+            context.CancellationThreadToken = cts.Token;
+            Thread senderThread = new Thread(new ParameterizedThreadStart(SenderThread));
+            senderThread.Start(context);
+            foreach (var parallelCheckType in parallelChecks)
+            {
+                var parallelCheck = (IParallelCheck)ActivatorUtilities.CreateInstance(serviceProvider, parallelCheckType, context.CancellationThreadToken);
+                Thread parallelCheckThread = new Thread(new ThreadStart(parallelCheck.StartIteartion));
+                parallelCheckThread.Start();
+            }
             Console.WriteLine("Start polling");
             try
             {
@@ -70,13 +92,14 @@ namespace InfoWriterWebSocketClient.Client
                         var updates = updateParser.Parse();
                         foreach (var update in updates)
                         {
+                            context.Update = update;
                             foreach (var middleware in middlewares)
                             {
                                 var middlewareObj = (IMiddleware)ActivatorUtilities.CreateInstance(serviceProvider, middleware);
                                 var res = middlewareObj.Execute();
                                 if(res != null)
                                 {
-                                    stream.Write(ResponseFactory.Text(res.ToJson()));
+                                    context.QueueMessage.Enqueue(ResponseFactory.Text(res.ToJson()));
                                 }
                             }
                             if (update.Frame == FrameMessageEnum.Text)
@@ -86,16 +109,17 @@ namespace InfoWriterWebSocketClient.Client
                                 var handler = GetHandler(ce);
                                 if (handler != null)
                                 {
+                                    context.ContextEnum = ce;
                                     var res = handler.Handle(update.Payload);
                                     if (res != null)
                                     {
-                                        stream.Write(ResponseFactory.Text(res.ToJson()));
+                                        context.QueueMessage.Enqueue(ResponseFactory.Text(res.ToJson()));
                                     }
                                 }
                             }
                             else if (update.Frame == FrameMessageEnum.Pong)
                             {
-                                Ping();
+                                context.QueueMessage.Enqueue(ResponseFactory.Ping());
                             }
                         }
                     }
@@ -105,14 +129,30 @@ namespace InfoWriterWebSocketClient.Client
             {
                 Console.WriteLine(ex.Message);
             }
+            cts.Cancel();
 
         }
 
-        public void Ping()
+        public void SenderThread(object obj)
         {
-            var stream = client.GetStream();
-            var msg = ResponseFactory.Ping();
-            stream.Write(msg, 0, msg.Length);
+            var userContext = (UserContext)obj;
+            var stream = userContext.Client.GetStream();
+            try
+            {
+                while (!userContext.CancellationThreadToken.IsCancellationRequested)
+                {
+                    byte[] msg;
+                    if (userContext.QueueMessage.TryDequeue(out msg))
+                    {
+                        Console.WriteLine($"Send msg - {Encoding.UTF8.GetString(msg)}");
+                        stream.Write(msg, 0, msg.Length);
+                    }
+                }
+                Console.WriteLine("userContext.CancellationThreadToken.IsCancellationRequested = {0}", userContext.CancellationThreadToken.IsCancellationRequested);
+            }
+            catch
+            {
+            }
         }
     }
 }

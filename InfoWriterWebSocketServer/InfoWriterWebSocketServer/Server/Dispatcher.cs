@@ -1,5 +1,6 @@
 ﻿using InfoWriterWebSocketServer.Enums;
 using InfoWriterWebSocketServer.Server.Abstractions;
+using InfoWriterWebSocketServer.Server.Models;
 using InfoWriterWebSocketServer.Server.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -7,6 +8,8 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 
 namespace InfoWriterWebSocketServer.Server
 {
@@ -19,6 +22,7 @@ namespace InfoWriterWebSocketServer.Server
         public Type onShutdown;
         private IServiceProvider serviceProvider;
         public float timeoutSec = 10;
+        public int pingInterval = 2000;
 
         public Dispatcher(IServiceProvider sp)
         {
@@ -69,24 +73,28 @@ namespace InfoWriterWebSocketServer.Server
         public void StartPolling(object obj)
         {
             Console.WriteLine($"New connection guid {Guid.NewGuid()}");
-            var scope = serviceProvider.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<UserContext>();
             var client = (TcpClient)obj;
             var stream = client.GetStream();
+            var scope = serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<UserContext>();
+            context.Client = client;
+            CancellationTokenSource cts = new CancellationTokenSource();
+            context.CancellationThreadToken = cts.Token;
+            Thread senderThread = new Thread(new ParameterizedThreadStart(SenderThread));
+            senderThread.Start(context);
+            Thread pingThread = new Thread(new ParameterizedThreadStart(PingThread));
+            pingThread.Start(context);
             try
             {
                 var updateParser = new UpdateParser();
                 var heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
-                Console.WriteLine("Send first pong");
-                Pong(client);
-                Console.WriteLine("after send first pong");
                 if (onSturtup != null)
                 {
                     var st = (ISturtup)ActivatorUtilities.CreateInstance(scope.ServiceProvider, onSturtup);
                     var res = st.OnSturtup();
                     if(res != null)
                     {
-                        stream.Write(ResponseFactory.Text(res.ToJson()));
+                        context.QueueMessage.Enqueue(ResponseFactory.Text(res.ToJson()));
                     }
                 }
                 while (client.Connected)
@@ -94,7 +102,7 @@ namespace InfoWriterWebSocketServer.Server
                     if (DateTimeOffset.Now.ToUnixTimeSeconds() - heartbeatTime > timeoutSec)
                     {
                         Console.WriteLine("the client is not responding. detachment");
-                        ConectionClose(client, "heartbeat stopped");
+                        ConectionClose(context, "heartbeat stopped");
                         throw new Exception("heartbeat stopped");
                     }
                     if (client.Available > 0)
@@ -106,71 +114,100 @@ namespace InfoWriterWebSocketServer.Server
                         var updates = updateParser.Parse();
                         foreach(var update in updates)
                         {
+                            context.Update = update;
                             foreach (var middleware in middlewares)
                             {
                                 var middlewareObj = (IMiddleware)ActivatorUtilities.CreateInstance(scope.ServiceProvider, middleware);
                                 var res = middlewareObj.Execute();
                                 if (res != null)
                                 {
-                                    stream.Write(ResponseFactory.Text(res.ToJson()));
+                                    context.QueueMessage.Enqueue(ResponseFactory.Text(res.ToJson()));
                                 }
                             }
                             if (update.Frame == FrameMessageEnum.Ping)
                             {
                                 heartbeatTime = DateTimeOffset.Now.ToUnixTimeSeconds();
-                                Pong(client);
                             }
                             else if (update.Frame == FrameMessageEnum.Text)
                             {
                                 var data = (JObject)JsonConvert.DeserializeObject(update.Payload);
                                 ContextEnum ce = (ContextEnum)(data.ContainsKey("context") ? data["context"].Value<int>() : throw new Exception("context absent"));
-                                context.Update = update;
                                 var handler = GetHandler(ce, scope.ServiceProvider);
                                 if (handler != null)
                                 {
-                                    context.contextEnum = ce;
+                                    context.ContextEnum = ce;
                                     var res = handler.Handle(update.Payload);
                                     if (res != null)
                                     {
-                                        stream.Write(ResponseFactory.Text(res.ToJson()));
+                                        context.QueueMessage.Enqueue(ResponseFactory.Text(res.ToJson()));
                                     }
                                 }
                             }
                             else if (update.Frame == FrameMessageEnum.ConectionClose)
                             {
-                                ConectionClose(client, "client close connection");
+                                ConectionClose(context, "client close connection");
                                 throw new Exception("client close connection");
                             }
                         }
-                        
                     }
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                
             }
             if (onShutdown != null)
             {
                 var st = (IShutdown)ActivatorUtilities.CreateInstance(scope.ServiceProvider, onShutdown);
                 st.OnShutdown();
             }
+            cts.Cancel();
             stream.Close();
             client.Close();
         }
 
-        public void Pong(TcpClient client)
+
+
+        public void PingThread(object obj)
         {
-            var stream = client.GetStream();
-            var msg = ResponseFactory.Pong();
-            stream.Write(msg, 0, msg.Length);
+            var userContext = (UserContext)obj;
+            while (!userContext.CancellationThreadToken.IsCancellationRequested)
+            {
+                var msg = ResponseFactory.Pong();
+                userContext.QueueMessage.Enqueue(msg);
+                Console.WriteLine("Add ping");
+                Thread.Sleep(pingInterval);
+            }
+            Console.WriteLine("userContext.CancellationThreadToken.IsCancellationRequested = {0}", userContext.CancellationThreadToken.IsCancellationRequested);
+
         }
-        public void ConectionClose(TcpClient client, string cause)
+
+        public void SenderThread(object obj)
         {
-            var stream = client.GetStream();
+            var userContext = (UserContext)obj;
+            var stream = userContext.Client.GetStream();
+            try
+            {
+                while (!userContext.CancellationThreadToken.IsCancellationRequested)
+                {
+                    byte[] msg;
+                    if (userContext.QueueMessage.TryDequeue(out msg))
+                    {
+                        Console.WriteLine($"Send msg - {Encoding.UTF8.GetString(msg)}");
+                        stream.Write(msg, 0, msg.Length);
+                    }
+                }
+                Console.WriteLine("userContext.CancellationThreadToken.IsCancellationRequested = {0}", userContext.CancellationThreadToken.IsCancellationRequested);
+            }
+            catch
+            {
+            }
+        }
+
+        public void ConectionClose(UserContext userContext, string cause)
+        {
             var msg = ResponseFactory.ConectionClose(cause);
-            stream.Write(msg, 0, msg.Length);
+            userContext.QueueMessage.Enqueue(msg);
         }
 
         public void SetTimeoutSec(float timeInSecFloat)
