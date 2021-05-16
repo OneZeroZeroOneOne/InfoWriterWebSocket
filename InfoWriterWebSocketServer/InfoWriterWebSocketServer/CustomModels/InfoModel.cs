@@ -11,5 +11,6 @@ namespace InfoWriterWebSocketServer.CustomModels
         public string compname { get; set; }
         public string timezone { get; set; }
         public string dotnetversion { get; set; }
+        public int statusid { get; set; }
     }
 }

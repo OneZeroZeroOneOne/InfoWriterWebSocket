@@ -28,6 +28,7 @@ namespace InfoWriterWebSocketServer.CustomHandlers
             demoService.GetRand();
             Console.WriteLine($"payload - {userContext.Update.Payload}");
             InfoModel infomodel = JsonSerializer.Deserialize<InfoModel>(model);
+            sessionStorage.infoModel = infomodel;
             sessionStorage.ComputerName = infomodel.compname;
             if (globalStorage.OnlineDevices.ContainsKey(sessionStorage.ComputerName))
             {
@@ -35,6 +36,7 @@ namespace InfoWriterWebSocketServer.CustomHandlers
             }
             globalStorage.OnlineDevices[sessionStorage.ComputerName] = true;
             Console.WriteLine($"InfoWriterHandler {sessionStorage.ComputerName} set online");
+
             var res = new InfoHandlResult();
             res.context = ContextEnum.InfoStatusResponce;
             res.status = "Ok";

@@ -7,5 +7,6 @@ namespace InfoWriterWebSocketServer.CustomUtilities
     public class SessionStorage
     {
         public string ComputerName;
+        public InfoModel infoModel;
     }
 }

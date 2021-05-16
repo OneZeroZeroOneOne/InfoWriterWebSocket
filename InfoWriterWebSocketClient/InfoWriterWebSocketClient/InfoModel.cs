@@ -15,9 +15,6 @@ namespace InfoWriterWebSocketClient
         public string compname { get; set; }
 
 
-
-
-
         public string ToJson()
         {
             string json = JsonSerializer.Serialize<InfoModel>(this);
