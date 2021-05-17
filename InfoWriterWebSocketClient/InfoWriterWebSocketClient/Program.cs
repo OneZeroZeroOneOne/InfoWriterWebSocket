@@ -22,13 +22,13 @@ namespace InfoWriterWebSocketClient
             var listServices = new List<BaseClient>();
             ser.AddScoped<InfoStorage>();
             var serviceProvider = ser.BuildServiceProvider();
-            var bc1 = new BaseClient(url, 7776, serviceProvider);
-            bc1.RegisterParallelCheck<CustomParallelCheck>();
-            bc1.RegisterHandler<InfoWriterHandler>(ContextEnum.InfoStatusResponce);
+            var bc = new BaseClient(url, 7776, serviceProvider);
+            bc.RegisterParallelCheck<CustomParallelCheck>();
+            bc.RegisterHandler<InfoWriterHandler>(ContextEnum.InfoStatusResponce);
             try
             {
-                bc1.Connect();
-                bc1.StartPoling();
+                bc.Connect();
+                bc.StartPoling();
             }
             catch (Exception ex)
             {

@@ -18,7 +18,8 @@ namespace InfoWriterWebSocketServer
         {
             var ser = new ServiceCollection();
             ser.AddScoped<UserContext>();
-            ser.AddScoped<TcpClient>();
+
+
             ser.AddScoped<DemoService>();
             ser.AddScoped<SessionStorage>();
             ser.AddSingleton<GlobalStorage>();

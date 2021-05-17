@@ -23,9 +23,6 @@ namespace InfoWriterWebSocketClient.ParallelChecks
         {
             if(infoStorage.lastInfoReportTime + 5 < DateTimeOffset.Now.ToUnixTimeSeconds())
             {
-                Console.WriteLine($"lastInfoReportTime {infoStorage.lastInfoReportTime}");
-                infoStorage.lastInfoReportTime = DateTimeOffset.Now.ToUnixTimeSeconds();
-                Console.WriteLine($"NewInfoReportTime {infoStorage.lastInfoReportTime}");
                 var im = new InfoModel
                 {
                     osname = Environment.OSVersion.ToString(),

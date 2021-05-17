@@ -33,11 +33,19 @@ namespace InfoWriterWebSocketServer.Server
             while (true)
             {
                 Console.Write("Waiting for a connection... ");
-                TcpClient client = server.AcceptTcpClient();
-                client.RFC6455Handshake();
-                Console.WriteLine("Connected!");
-                Thread myThread = new Thread(new ParameterizedThreadStart(_dispatcherPrototype.StartPolling));
-                myThread.Start(client);
+                try
+                {
+                    TcpClient client = server.AcceptTcpClient();
+                    client.RFC6455Handshake();
+                    Console.WriteLine("Connected!");
+                    Thread myThread = new Thread(new ParameterizedThreadStart(_dispatcherPrototype.StartPolling));
+                    myThread.Start(client);
+                }
+                catch
+                {
+
+                }
+                
 
             }
         }
