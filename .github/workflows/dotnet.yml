@@ -11,6 +11,8 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
+    - name: show files
+      run: ls
     - name: change dir
       run: cd InfoWriterWebSocketServer/
     - name: show files
