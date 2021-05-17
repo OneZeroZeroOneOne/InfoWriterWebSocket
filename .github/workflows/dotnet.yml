@@ -1,0 +1,34 @@
+name: .NET
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: List files
+      run: ls
+    - name: Build
+      run: dotnet build InfoWriterWebSocketServer/InfoWriterWebSocketServer/InfoWriterWebSocketServer.csproj --configuration Release 
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: Copy file via ssh password
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: ${{ secrets.PORT }}
+        source: "InfoWriterWebSocketServer/InfoWriterWebSocketServer/bin/Release/netcoreapp3.1/*"
+        target: "InfoWriterWebSocketServer.Builded"
+
