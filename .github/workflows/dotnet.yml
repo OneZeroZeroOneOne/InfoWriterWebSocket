@@ -11,12 +11,6 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-    - name: show files
-      run: ls
-    - name: change dir
-      run: cd InfoWriterWebSocketServer/
-    - name: show files
-      run: ls
     - uses: actions/checkout@v2
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
@@ -25,8 +19,16 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --configuration Release 
+      run: dotnet build InfoWriterWebSocketServer/InfoWriterWebSocketServer/InfoWriterWebSocketServer.csproj --configuration Release 
     - name: Test
       run: dotnet test --no-build --verbosity normal
-    - name: show files after build
-      run: ls
+    - name: Copy file via ssh password
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: ${{ secrets.PORT }}
+        source: "InfoWriterWebSocketServer/InfoWriterWebSocketServer/bin/Release/netcoreapp3.1/*"
+        target: "InfoWriterWebSocketServer.Builded"
+
