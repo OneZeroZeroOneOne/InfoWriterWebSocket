@@ -1,4 +1,5 @@
-﻿using System;
+﻿using InfoWriterWebSocketServer.CustomModels;
+using System;
 using System.Collections.Generic;
 using System.Text;
 

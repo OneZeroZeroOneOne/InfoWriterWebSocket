@@ -5,6 +5,7 @@ using InfoWriterWebSocketServer.Enums;
 using InfoWriterWebSocketServer.Server;
 using InfoWriterWebSocketServer.Server.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Net.Sockets;
 
 namespace InfoWriterWebSocketServer
@@ -19,8 +20,6 @@ namespace InfoWriterWebSocketServer
             ser.AddScoped<DemoService>();
             ser.AddScoped<SessionStorage>();
             ser.AddSingleton<GlobalStorage>();
-
-
             var ds = new Dispatcher(ser.BuildServiceProvider());
             ds.AddHandler<InfoWriterHandler, InfoModel>(ContextEnum.Info);
             ds.OnShutdown<CustomOnShutdown>();

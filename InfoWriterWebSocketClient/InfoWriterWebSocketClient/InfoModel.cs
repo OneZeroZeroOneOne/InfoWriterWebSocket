@@ -13,6 +13,7 @@ namespace InfoWriterWebSocketClient
         public string timezone { get; set; }
         public string dotnetversion { get; set; }
         public string compname { get; set; }
+        public int statusid { get; set; }
 
 
         public string ToJson()

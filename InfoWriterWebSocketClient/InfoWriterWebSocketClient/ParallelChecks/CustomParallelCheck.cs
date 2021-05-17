@@ -32,7 +32,9 @@ namespace InfoWriterWebSocketClient.ParallelChecks
                     context = (int)ContextEnum.Info,
                     dotnetversion = Environment.Version.ToString(),
                     timezone = TimeZone.CurrentTimeZone.ToString(),
-                    compname = Environment.MachineName
+                    compname = Environment.MachineName,
+                    statusid = 1,
+
                 };
                 userContext.QueueMessage.Enqueue(ResponseFactory.Text(im.ToJson()));
             }

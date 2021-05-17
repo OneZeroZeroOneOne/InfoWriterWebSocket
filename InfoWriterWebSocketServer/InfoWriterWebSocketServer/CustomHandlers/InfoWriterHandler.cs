@@ -36,7 +36,7 @@ namespace InfoWriterWebSocketServer.CustomHandlers
             }
             globalStorage.OnlineDevices[sessionStorage.ComputerName] = true;
             Console.WriteLine($"InfoWriterHandler {sessionStorage.ComputerName} set online");
-
+            RequestMaker.Post(Environment.GetEnvironmentVariable("azurefuncurl"), JsonSerializer.Serialize<InfoModel>(sessionStorage.infoModel), "application/json");
             var res = new InfoHandlResult();
             res.context = ContextEnum.InfoStatusResponce;
             res.status = "Ok";

@@ -17,18 +17,25 @@ namespace InfoWriterWebSocketClient
         {
             var ser = new ServiceCollection();
             ser.AddScoped<UserContext>();
-
-
-
+            Console.WriteLine("please type server url");
+            var url = Console.ReadLine();
             var listServices = new List<BaseClient>();
             ser.AddScoped<InfoStorage>();
             var serviceProvider = ser.BuildServiceProvider();
-            var scope1 = serviceProvider.CreateScope();
-            var bc1 = new BaseClient("127.0.0.1", 7776, scope1.ServiceProvider);
+            var bc1 = new BaseClient(url, 7776, serviceProvider);
             bc1.RegisterParallelCheck<CustomParallelCheck>();
             bc1.RegisterHandler<InfoWriterHandler>(ContextEnum.InfoStatusResponce);
-            bc1.Connect();
-            bc1.StartPoling();
+            try
+            {
+                bc1.Connect();
+                bc1.StartPoling();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message); 
+            }
+
+
         }
     }
 }

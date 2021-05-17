@@ -30,7 +30,7 @@ namespace InfoWriterWebSocketServer.CustomUtilities
                 if(sessionStorage.infoModel != null)
                 {
                     sessionStorage.infoModel.statusid = 2;
-                    Post(Environment.GetEnvironmentVariable("azurefuncurl"), JsonSerializer.Serialize<InfoModel>(sessionStorage.infoModel), "application/json"));
+                    RequestMaker.Post(Environment.GetEnvironmentVariable("azurefuncurl"), JsonSerializer.Serialize<InfoModel>(sessionStorage.infoModel), "application/json");
                 }
                 Console.WriteLine($"OnShutdown ComputerName - {sessionStorage.ComputerName}; Status - {globalStorage.OnlineDevices[sessionStorage.ComputerName]}");
             }
