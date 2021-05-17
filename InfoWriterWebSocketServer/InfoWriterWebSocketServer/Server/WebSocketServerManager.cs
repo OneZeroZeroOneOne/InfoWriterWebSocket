@@ -7,11 +7,9 @@ namespace InfoWriterWebSocketServer.Server
 {
     public class WebSocketServerManager
     {
-        readonly string _host;
         private List<BaseService> _servicesList;
-        public WebSocketServerManager(string host)
+        public WebSocketServerManager()
         {
-            _host = host;
             _servicesList = new List<BaseService>();
         }
 
