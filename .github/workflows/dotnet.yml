@@ -17,7 +17,7 @@ jobs:
       with:
         dotnet-version: 3.1.x
     - name: List files
-      run: ls
+      run: ls InfoWriterWebSocketServer/InfoWriterWebSocketServer
     - name: Build
       run: dotnet build InfoWriterWebSocketServer/InfoWriterWebSocketServer/InfoWriterWebSocketServer.csproj --configuration Release 
     - name: List files
