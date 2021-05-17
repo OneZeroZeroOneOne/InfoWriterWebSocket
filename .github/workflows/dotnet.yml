@@ -10,19 +10,17 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
     steps:
+    - name: change dir
+      run: cd InfoWriterWebSocketServer/
+    - name: show files
+      run: ls
     - uses: actions/checkout@v2
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.x
-    - name: change dir
-      run: cd InfoWriterWebSocketServer/
-    - name: show files
-      run: ls
     - name: Restore dependencies
-    
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release 
