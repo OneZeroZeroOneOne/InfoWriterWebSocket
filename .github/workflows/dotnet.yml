@@ -16,8 +16,8 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.x
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: List files
+      run: ls
     - name: Build
       run: dotnet build InfoWriterWebSocketServer/InfoWriterWebSocketServer/InfoWriterWebSocketServer.csproj --configuration Release 
     - name: Test
